@@ -1,4 +1,4 @@
-name: Delta Monitor
+name: Travel Monitors
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-monitor:
+  delta-monitor:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,3 +14,12 @@ jobs:
         with:
           python-version: '3.11'
       - run: python monitor.py
+
+  southwest-monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python southwest_monitor.py
