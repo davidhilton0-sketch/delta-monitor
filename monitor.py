@@ -1,5 +1,23 @@
 import datetime
 import random
+import smtplib
+import os
+from email.message import EmailMessage
+
+GMAIL_USER = os.environ["GMAIL_USER"]
+GMAIL_PASS = os.environ["GMAIL_PASS"]
+EMAIL_TO = "4042293044@tmomail.net"
+
+def send_alert(subject, body):
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = GMAIL_USER
+    msg["To"] = EMAIL_TO
+    msg.set_content(body)
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(GMAIL_USER, GMAIL_PASS)
+        smtp.send_message(msg)
 
 print("Delta Monitor Active")
 print("UTC:", datetime.datetime.utcnow())
@@ -33,10 +51,12 @@ print("-----")
 
 if alerts:
     print("GOOD DEALS:")
+    body = ""
     for route, price in alerts:
-        print(f"BUY: {route} @ {price}")
-else:
-    print("No good deals")
+        line = f"BUY: {route} @ {price}"
+        print(line)
+        body += line + "\n"
+    send_alert("DELTA DEAL FOUND", body)
 
 print("-----")
 
@@ -44,7 +64,5 @@ if watchlist:
     print("WATCH LIST:")
     for route, price in watchlist:
         print(f"WATCH: {route} @ {price}")
-else:
-    print("No watch routes")
 
 print("Monitor complete")
