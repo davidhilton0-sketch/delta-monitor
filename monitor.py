@@ -3,18 +3,25 @@ import datetime
 print("Delta Monitor Active")
 print("UTC:", datetime.datetime.utcnow())
 
-# Placeholder logic — proves decision engine runs
 routes = [
-    "ATL-LAX-PPT",
-    "ATL-SEA-PPT",
-    "ATL-SLC-PPT"
+    ("ATL-LAX-PPT", 165000),
+    ("ATL-SEA-PPT", 142000),
+    ("ATL-SLC-PPT", 98000)
 ]
 
-threshold = 150000
+GOOD_THRESHOLD = 120000
+WATCH_THRESHOLD = 150000
 
 print("Checking routes...")
 
-for route in routes:
-    print(f"Evaluating {route}...")
+for route, price in routes:
+    print(f"Evaluating {route} — {price}")
 
-print("No deals found")
+    if price <= GOOD_THRESHOLD:
+        print("GOOD DEAL")
+    elif price <= WATCH_THRESHOLD:
+        print("WATCH")
+    else:
+        print("IGNORE")
+
+print("Decision engine complete")
