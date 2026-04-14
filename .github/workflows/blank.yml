@@ -2,15 +2,15 @@ name: Delta Monitor
 
 on:
   schedule:
-    - cron: "*/30 * * * *" 
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:
-  monitor:
+  run-monitor:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Run monitor
-        run: |
-          echo "Delta monitor running"
-          date
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python monitor.py
