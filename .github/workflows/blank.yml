@@ -1,0 +1,16 @@
+name: Delta Monitor
+
+on:
+  schedule:
+    - cron: "*/30 * * * *
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run monitor
+        run: |
+          echo "Delta monitor running"
+          date
