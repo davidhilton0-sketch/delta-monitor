@@ -1,12 +1,13 @@
 import datetime
+import random
 
 print("Delta Monitor Active")
 print("UTC:", datetime.datetime.utcnow())
 
 routes = [
-    {"origin":"ATL","gateway":"LAX","dest":"PPT","price":165000},
-    {"origin":"ATL","gateway":"SEA","dest":"PPT","price":142000},
-    {"origin":"ATL","gateway":"SLC","dest":"PPT","price":98000}
+    {"origin":"ATL","gateway":"LAX","dest":"PPT"},
+    {"origin":"ATL","gateway":"SEA","dest":"PPT"},
+    {"origin":"ATL","gateway":"SLC","dest":"PPT"}
 ]
 
 GOOD_THRESHOLD = 120000
@@ -19,7 +20,7 @@ print("Checking routes...")
 
 for r in routes:
     route_name = f"{r['origin']}-{r['gateway']}-{r['dest']}"
-    price = r["price"]
+    price = random.randint(90000, 170000)
 
     print(f"Evaluating {route_name} — {price}")
 
