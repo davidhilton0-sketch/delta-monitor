@@ -14,15 +14,27 @@ WATCH_THRESHOLD = 150000
 
 print("Checking routes...")
 
+alerts = []
+
 for origin, gateway, dest, price in routes:
     route_name = f"{origin}-{gateway}-{dest}"
     print(f"Evaluating {route_name} — {price}")
 
     if price <= GOOD_THRESHOLD:
         print("GOOD DEAL:", route_name)
+        alerts.append((route_name, price))
     elif price <= WATCH_THRESHOLD:
         print("WATCH:", route_name)
     else:
         print("IGNORE:", route_name)
 
-print("Route model complete")
+print("----")
+
+if alerts:
+    print("ALERTS FOUND:")
+    for route, price in alerts:
+        print(f"ALERT: {route} @ {price}")
+else:
+    print("No alerts")
+
+print("Alert stage complete")
