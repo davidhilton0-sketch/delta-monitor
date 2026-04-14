@@ -4,37 +4,46 @@ print("Delta Monitor Active")
 print("UTC:", datetime.datetime.utcnow())
 
 routes = [
-    ("ATL", "LAX", "PPT", 165000),
-    ("ATL", "SEA", "PPT", 142000),
-    ("ATL", "SLC", "PPT", 98000)
+    {"origin":"ATL","gateway":"LAX","dest":"PPT","price":165000},
+    {"origin":"ATL","gateway":"SEA","dest":"PPT","price":142000},
+    {"origin":"ATL","gateway":"SLC","dest":"PPT","price":98000}
 ]
 
 GOOD_THRESHOLD = 120000
 WATCH_THRESHOLD = 150000
 
+alerts = []
+watchlist = []
+
 print("Checking routes...")
 
-alerts = []
+for r in routes:
+    route_name = f"{r['origin']}-{r['gateway']}-{r['dest']}"
+    price = r["price"]
 
-for origin, gateway, dest, price in routes:
-    route_name = f"{origin}-{gateway}-{dest}"
     print(f"Evaluating {route_name} — {price}")
 
     if price <= GOOD_THRESHOLD:
-        print("GOOD DEAL:", route_name)
         alerts.append((route_name, price))
     elif price <= WATCH_THRESHOLD:
-        print("WATCH:", route_name)
-    else:
-        print("IGNORE:", route_name)
+        watchlist.append((route_name, price))
 
-print("----")
+print("-----")
 
 if alerts:
-    print("ALERTS FOUND:")
+    print("GOOD DEALS:")
     for route, price in alerts:
-        print(f"ALERT: {route} @ {price}")
+        print(f"BUY: {route} @ {price}")
 else:
-    print("No alerts")
+    print("No good deals")
 
-print("Alert stage complete")
+print("-----")
+
+if watchlist:
+    print("WATCH LIST:")
+    for route, price in watchlist:
+        print(f"WATCH: {route} @ {price}")
+else:
+    print("No watch routes")
+
+print("Monitor complete")
