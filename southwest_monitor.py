@@ -1,5 +1,23 @@
 import datetime
 import random
+import smtplib
+import os
+from email.message import EmailMessage
+
+GMAIL_USER = os.environ["GMAIL_USER"]
+GMAIL_PASS = os.environ["GMAIL_PASS"]
+EMAIL_TO = "4042293044@tmomail.net"
+
+def send_alert(subject, body):
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = GMAIL_USER
+    msg["To"] = EMAIL_TO
+    msg.set_content(body)
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(GMAIL_USER, GMAIL_PASS)
+        smtp.send_message(msg)
 
 print("Southwest Monitor Active")
 print("UTC:", datetime.datetime.utcnow())
@@ -33,10 +51,12 @@ print("-----")
 
 if alerts:
     print("GOOD DEALS:")
+    body = ""
     for route, points in alerts:
-        print(f"BUY: {route} @ {points}")
-else:
-    print("No good deals")
+        line = f"BUY: {route} @ {points}"
+        print(line)
+        body += line + "\n"
+    send_alert("SOUTHWEST DEAL FOUND", body)
 
 print("-----")
 
@@ -44,7 +64,5 @@ if watchlist:
     print("WATCH LIST:")
     for route, points in watchlist:
         print(f"WATCH: {route} @ {points}")
-else:
-    print("No watch routes")
 
 print("Southwest monitor complete")
