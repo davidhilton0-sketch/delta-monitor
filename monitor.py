@@ -1,68 +1,104 @@
-import datetime
-import random
-import smtplib
+import json
 import os
-from email.message import EmailMessage
+import smtplib
+import time
+import datetime
+import urllib.request
+import urllib.error
+import urllib.parse
+from email.mime.text import MIMEText
 
-GMAIL_USER = os.environ["GMAIL_USER"]
-GMAIL_PASS = os.environ["GMAIL_PASS"]
+ORIGIN_AIRPORTS = ["ATL", "LAX", "SEA", "SLC"]
+DESTINATION = "PPT"
+CABIN = "business"
+THRESHOLD_MILES = 150000
+SEARCH_DAYS_AHEAD = 90
+
+SEATS_AERO_BASE = "https://seats.aero/api/availability"
+
+SEATS_AERO_API_KEY = os.environ.get("SEATS_AERO_API_KEY", "")
+GMAIL_USER = os.environ.get("GMAIL_USER", "")
+GMAIL_PASS = os.environ.get("GMAIL_PASS", "")
 EMAIL_TO = "4042293044@tmomail.net"
 
 def send_alert(subject, body):
-    msg = EmailMessage()
+    if not GMAIL_USER or not GMAIL_PASS:
+        print("[SKIP] Email not configured")
+        return
+
+    msg = MIMEText(body)
     msg["Subject"] = subject
     msg["From"] = GMAIL_USER
     msg["To"] = EMAIL_TO
-    msg.set_content(body)
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
         smtp.login(GMAIL_USER, GMAIL_PASS)
-        smtp.send_message(msg)
+        smtp.sendmail(GMAIL_USER, EMAIL_TO, msg.as_string())
 
-print("Delta Monitor Active")
-print("UTC:", datetime.datetime.utcnow())
+def fetch_availability(origin):
+    start_date = datetime.date.today().isoformat()
+    end_date = (datetime.date.today() + datetime.timedelta(days=SEARCH_DAYS_AHEAD)).isoformat()
 
-routes = [
-    {"origin":"ATL","gateway":"LAX","dest":"PPT"},
-    {"origin":"ATL","gateway":"SEA","dest":"PPT"},
-    {"origin":"ATL","gateway":"SLC","dest":"PPT"}
-]
+    params = urllib.parse.urlencode({
+        "origin_airport": origin,
+        "destination_airport": DESTINATION,
+        "cabin": CABIN,
+        "start_date": start_date,
+        "end_date": end_date,
+        "take": 10
+    })
 
-GOOD_THRESHOLD = 120000
-WATCH_THRESHOLD = 150000
+    url = f"{SEATS_AERO_BASE}?{params}"
+    print(f"[API] GET {url}")
 
-alerts = []
-watchlist = []
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Partner-Authorization": SEATS_AERO_API_KEY,
+            "Accept": "application/json"
+        }
+    )
 
-print("Checking routes...")
+    try:
+        with urllib.request.urlopen(req) as response:
+            status = response.status
+            data = json.loads(response.read().decode("utf-8"))
 
-for r in routes:
-    route_name = f"{r['origin']}-{r['gateway']}-{r['dest']}"
-    price = random.randint(90000, 170000)
+            print(f"[API] Status: {status}")
+            print(f"[API] Records: {len(data.get('data', []))}")
 
-    print(f"Evaluating {route_name} — {price}")
+            return data.get("data", [])
 
-    if price <= GOOD_THRESHOLD:
-        alerts.append((route_name, price))
-    elif price <= WATCH_THRESHOLD:
-        watchlist.append((route_name, price))
+    except urllib.error.HTTPError as e:
+        print(f"[ERROR] HTTP {e.code}")
+        if e.code == 401:
+            print("[FATAL] API KEY INVALID")
+        return []
 
-print("-----")
+def main():
+    print("[START] Delta Monitor")
+    print("UTC:", datetime.datetime.utcnow())
 
-if alerts:
-    print("GOOD DEALS:")
-    body = ""
-    for route, price in alerts:
-        line = f"BUY: {route} @ {price}"
-        print(line)
-        body += line + "\n"
-    send_alert("DELTA DEAL FOUND", body)
+    if not SEATS_AERO_API_KEY:
+        print("[FATAL] Missing SEATS_AERO_API_KEY")
+        return
 
-print("-----")
+    for origin in ORIGIN_AIRPORTS:
+        print(f"\nChecking {origin} → {DESTINATION}")
 
-if watchlist:
-    print("WATCH LIST:")
-    for route, price in watchlist:
-        print(f"WATCH: {route} @ {price}")
+        records = fetch_availability(origin)
 
-print("Monitor complete")
+        for r in records:
+            miles = r.get("JMileageCost", 0)
+
+            if miles and miles < THRESHOLD_MILES:
+                msg = f"{origin}-{DESTINATION} {miles} miles"
+                print("[DEAL]", msg)
+                send_alert("Delta Deal Found", msg)
+
+        time.sleep(3)
+
+    print("\n[DONE]")
+
+if __name__ == "__main__":
+    main()
