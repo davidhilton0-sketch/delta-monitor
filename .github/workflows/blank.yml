@@ -15,6 +15,7 @@ jobs:
           python-version: '3.11'
       - run: python monitor.py
         env:
+          SEATS_AERO_API_KEY: ${{ secrets.SEATS_AERO_API_KEY }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
 
